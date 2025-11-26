@@ -5,8 +5,8 @@ import { IEncaminhamentoRepository } from "@/app/lib/repositories/contracts/IEnc
 export class EncaminhamentoService {
   constructor(private encaminhamentoRepository: IEncaminhamentoRepository) {}
 
-  async getAllEncaminhamentos(): Promise<Encaminhamento[]> {
-    return await this.encaminhamentoRepository.getAll();
+  async getAllEncaminhamentos(hospitalId: string): Promise<Encaminhamento[]> {
+    return await this.encaminhamentoRepository.getAllByHospital(hospitalId);
   }
 
   async getEncaminhamentoById(id: string): Promise<Encaminhamento | null> {

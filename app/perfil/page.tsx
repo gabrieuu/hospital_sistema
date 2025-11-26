@@ -4,23 +4,19 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/app/lib/components/ui/Card';
 import { Button } from '@/app/lib/components/ui/Button';
-
-// Dados mockados
-const mockUser = {
-  nome: 'Dr. Carlos Souza',
-  email: 'carlos.souza@hospital.com',
-  hospital: 'Hospital Santa Maria',
-  role: 'Médico',
-  telefone: '(11) 98765-4321'
-};
+import { Modular } from '../lib/di/service';
+import { useUserStore } from '../lib/stores/UserStore';
 
 export default function PerfilPage() {
   const router = useRouter();
   const [notificacoesAtivas, setNotificacoesAtivas] = useState(true);
   const [temaEscuro, setTemaEscuro] = useState(false);
+  const userStore = useUserStore();
+  const authService = Modular.authService;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (confirm('Deseja realmente sair do sistema?')) {
+      await authService.logout();
       router.push('/login');
     }
   };
@@ -49,14 +45,13 @@ export default function PerfilPage() {
             <div className="flex items-center gap-4 mb-6">
               <div className="w-20 h-20 bg-gradient-to-br from-[#0A3D62] to-[#0A5D92] rounded-full flex items-center justify-center">
                 <span className="text-3xl font-bold text-white">
-                  {mockUser.nome.split(' ').map(n => n[0]).join('').substring(0, 2)}
+                  {userStore.user?.nome.split(' ').map(n => n[0]).join('').substring(0, 2)}
                 </span>
               </div>
               <div>
                 <h2 className="text-2xl font-semibold text-[#1A1A1A]">
-                  {mockUser.nome}
+                  {userStore.user?.nome}
                 </h2>
-                <p className="text-gray-600">{mockUser.role}</p>
               </div>
             </div>
 
@@ -67,7 +62,7 @@ export default function PerfilPage() {
                 </svg>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium text-[#1A1A1A]">{mockUser.email}</p>
+                  <p className="font-medium text-[#1A1A1A]">{userStore.user!.email}</p>
                 </div>
               </div>
 
@@ -77,17 +72,7 @@ export default function PerfilPage() {
                 </svg>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600">Hospital</p>
-                  <p className="font-medium text-[#1A1A1A]">{mockUser.hospital}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 py-3">
-                <svg className="w-5 h-5 text-[#0A3D62]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600">Telefone</p>
-                  <p className="font-medium text-[#1A1A1A]">{mockUser.telefone}</p>
+                  <p className="font-medium text-[#1A1A1A]">{userStore.hospital}</p>
                 </div>
               </div>
             </div>

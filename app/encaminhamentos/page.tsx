@@ -7,19 +7,22 @@ import { Encaminhamento } from '@/app/lib/domain/models/Encaminhamento';
 import { EncaminhamentoStatus } from '@/app/lib/domain/enum/EncaminhamentoStatus';
 import { UrgencyLevel } from '@/app/lib/domain/enum/UrgencyLevel';
 import { Modular } from '../lib/di/service';
+import { useUserStore } from '../lib/stores/UserStore';
 
 export default function EncaminhamentosPage() {
   const router = useRouter();
   const [encaminhamentos, setEncaminhamentos] = useState<Encaminhamento[]>([]);
   const [loading, setLoading] = useState(true);
   const encaminhamentoService = Modular.encaminhamentoService;
+  const userStore = useUserStore();
+
   useEffect(() => {
     loadEncaminhamentos();
   }, []);
 
   async function loadEncaminhamentos() {
     try {
-      const data = await encaminhamentoService.getAllEncaminhamentos();
+      const data = await encaminhamentoService.getAllEncaminhamentos(userStore.hospitalId);
       setEncaminhamentos(data);
     } catch (error) {
       console.error('Erro ao carregar encaminhamentos:', error);

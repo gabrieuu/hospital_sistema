@@ -1,4 +1,4 @@
-import { Patient } from "@/lib/domain/models"
+import { Patient } from "@/app/lib/domain/models";
 
 type PacientComponentProp ={
     paciente: Patient,

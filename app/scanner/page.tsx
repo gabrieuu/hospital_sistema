@@ -7,7 +7,7 @@ import { Button } from '@/app/lib/components/ui/Button';
 export default function ScannerPage() {
   const router = useRouter();
   const [isScanning, setIsScanning] = useState(false);
-
+  
   const handleScan = () => {
     setIsScanning(true);
     
@@ -66,7 +66,6 @@ export default function ScannerPage() {
                   <Button
                     onClick={handleScan}
                     variant="primary"
-                    size="lg"
                     className="min-w-[200px]"
                   >
                     Ler Tag

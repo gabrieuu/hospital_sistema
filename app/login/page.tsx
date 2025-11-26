@@ -4,16 +4,21 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/app/lib/components/ui/Input';
 import { Button } from '@/app/lib/components/ui/Button';
+import { Modular } from '../lib/di/service';
+import { LoginResponse } from '../lib/domain/models/LoginResponse';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
   const [loading, setLoading] = useState(false);
+  const authService = Modular.authService;
 
   useEffect(() => {
-    const isLogado: boolean = false;
+    const savedLogin : LoginResponse | null = authService.getSavedToken();
+    const isLogado: boolean = !!savedLogin;
     if(isLogado){
         router.push('/dashboard');
     }
@@ -22,12 +27,14 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulação de login
-    setTimeout(() => {
-      setLoading(false);
+    const isLoggedIn = await authService.login(email, password);
+    setLoading(false);
+    if (!!isLoggedIn) {
       router.push('/dashboard');
-    }, 1000);
+    } else {
+      setPassword('');
+      setErrorMsg('Falha no login. Verifique suas credenciais.');
+    }
   };
 
   return (
@@ -98,7 +105,6 @@ export default function LoginPage() {
             <Button
               type="submit"
               variant="primary"
-              size="lg"
               className="w-full"
               disabled={loading}
             >
@@ -114,6 +120,9 @@ export default function LoginPage() {
               </a>
             </div>
           </form>
+          {errorMsg && (
+            <p className="mt-4 text-center text-sm text-red-500">{errorMsg}</p>
+          )}
         </div>
 
         {/* Rodapé */}

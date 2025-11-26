@@ -1,3 +1,5 @@
+import { Exame } from "./exame";
+
 export interface Hospital {
   id: string;
   nome: string;
@@ -5,6 +7,7 @@ export interface Hospital {
   telefone: string;
   email: string;
   especialidades: string[];
+  tipos_exames: Exame[];
   distancia?: string;
   disponivel: boolean;
   disponibilidade: string;

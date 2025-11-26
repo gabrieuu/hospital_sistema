@@ -1,51 +1,50 @@
 'use client';
 
-import React, { use, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/app/lib/components/ui/Card';
 import { Input } from '@/app/lib/components/ui/Input';
-import { Button } from '@/app/lib/components/ui/Button';
 import PatientCardComponent from './components/PatientCardComponent';
+import { usePatientStore } from '../lib/stores/PatientStore';
+import { useEffect, useState } from 'react';
 import { Modular } from '../lib/di/service';
-import { Patient } from '../lib/domain/models';
+import { useUserStore } from '../lib/stores/UserStore';
+import { DashboardStats } from '../lib/domain/models';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(''); 
 
-  const [filteredPacientes, setFilteredPacientes] = useState<Patient[]>();
+  const [debounceSearch, setDebounceSearch] = useState('');
 
-  const [debounce, setDebounce] = useState('');
+  const patientStore = usePatientStore();
 
-  const patientService = Modular.patientService;
+  const userStore = useUserStore();
+
+  const [dashboardStats, setDashboardStats] = useState<DashboardStats | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      const stats = await Modular.dashboardService.getDashboardStats(userStore.hospitalId);
+      setDashboardStats(stats);
+    };
+
+    fetchDashboardStats();
+  }, [userStore.hospitalId]);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
-      setDebounce(searchQuery);
+      setDebounceSearch(searchQuery);
     }, 500)
     return () => clearTimeout(timeout);
   }, [searchQuery]);
 
-  const fetchPacientes = async () => {
-    const pacientes = await patientService.getAllPatients();
-    setFilteredPacientes(pacientes);
-  };
-
-  const fetchFilteredPacientes = async (query: string) => {
-      const pacientes : Patient[] = await patientService.getAllPatients();
-      const filtered = pacientes.filter(p =>
-        p.nome.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredPacientes(filtered);
-  }
-
   useEffect(() => {
-    fetchPacientes();
+    patientStore.fetchPatients();
   }, []);
 
   useEffect(() => {
-    fetchFilteredPacientes(debounce);
-  }, [debounce]);
+    patientStore.fetchFilteredPatients(debounceSearch);
+  }, [debounceSearch]);
 
   return (
     <div className="min-h-screen bg-[#F5F6FA]">
@@ -134,10 +133,10 @@ export default function DashboardPage() {
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">3</span>
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">{dashboardStats?.encaminhamentosPendentes || 0}</span>
               </div>
               <h3 className="font-semibold text-lg">Encaminhamentos</h3>
-              <p className="text-sm text-gray-600">3 pendentes</p>
+              <p className="text-sm text-gray-600">{dashboardStats?.encaminhamentosPendentes || 0} pendentes</p>
             </div>
           </Card>
         </div>
@@ -148,9 +147,9 @@ export default function DashboardPage() {
             Pacientes do dia
           </h2>
           {
-            (filteredPacientes && filteredPacientes.length > 0) ? (
+            (patientStore.filteredPatients && patientStore.filteredPatients.length > 0) ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredPacientes.map((paciente) => (
+            {patientStore.filteredPatients.map((paciente) => (
               <Card
                 key={paciente.id}
                 onClick={() => router.push(`/pacientes/${paciente.id}`)}

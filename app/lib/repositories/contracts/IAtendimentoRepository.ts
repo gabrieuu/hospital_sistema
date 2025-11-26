@@ -1,7 +1,7 @@
 import { Atendimento } from "@/app/lib/domain/models/Atendimento";
 
 export interface IAtendimentoRepository {
-  getAll(): Promise<Atendimento[]>;
+  getAllbyHospital(hospitalId: string): Promise<Atendimento[]>;
   getById(id: string): Promise<Atendimento | null>;
   getByPaciente(pacienteId: string): Promise<Atendimento[]>;
   getByHospital(hospitalId: string): Promise<Atendimento[]>;

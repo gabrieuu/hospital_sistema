@@ -2,7 +2,7 @@ import { Encaminhamento } from "@/app/lib/domain/models/Encaminhamento";
 import { EncaminhamentoStatus } from "@/app/lib/domain/enum/EncaminhamentoStatus";
 
 export interface IEncaminhamentoRepository {
-  getAll(): Promise<Encaminhamento[]>;
+  getAllByHospital(hospitalId: string): Promise<Encaminhamento[]>;
   getById(id: string): Promise<Encaminhamento | null>;
   getByPaciente(pacienteId: string): Promise<Encaminhamento[]>;
   getByHospital(hospitalId: string): Promise<Encaminhamento[]>;

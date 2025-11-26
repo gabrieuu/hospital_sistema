@@ -1,10 +1,10 @@
 import {
   MockAtendimentoRepository,
+  MockAuthRepository,
   MockEncaminhamentoRepository,
   MockHospitalRepository,
   MockPatientRepository,
   MockStatsRepository,
-  MockUserRepository
 } from '@/app/lib/repositories/implementations/MockRepositories';
 
 import { AtendimentoService } from '@/app/lib/services/AtendimentoService';
@@ -12,7 +12,8 @@ import { DashboardService } from '@/app/lib/services/DashboardService';
 import { EncaminhamentoService } from '@/app/lib/services/EncaminhamentoService';
 import { HospitalService } from '@/app/lib/services/HospitalService';
 import { PatientService } from '@/app/lib/services/PatientService';
-import { UserService } from '@/app/lib/services/UserService';
+import { AuthService } from '../services/AuthService';
+import { get } from 'http';
 
 // ================================================================
 // SINGLETON INSTANCES (In-memory during session)
@@ -21,26 +22,32 @@ import { UserService } from '@/app/lib/services/UserService';
 let patientRepositoryInstance: MockPatientRepository | null = null;
 let encaminhamentoRepositoryInstance: MockEncaminhamentoRepository | null = null;
 let hospitalRepositoryInstance: MockHospitalRepository | null = null;
-let userRepositoryInstance: MockUserRepository | null = null;
 let atendimentoRepositoryInstance: MockAtendimentoRepository | null = null;
 let statsRepositoryInstance: MockStatsRepository | null = null;
-
+let authRepositoryInstance: MockAuthRepository | null = null;
 // ================================================================
 // DIRECT  FOR EASY USAGE IN COMPONENTS
 // ================================================================
 
 export const Modular = {
-    patientService: createPatientService(),
-    encaminhamentoService: createEncaminhamentoService(),
-    hospitalService: createHospitalService(),
-    userService: createUserService(),
-    atendimentoService: createAtendimentoService(),
-    dashboardService: createDashboardService()
+    patientService: new PatientService(getPatientRepository()),
+    encaminhamentoService: new EncaminhamentoService(getEncaminhamentoRepository()),
+    hospitalService: new HospitalService(getHospitalRepository()),
+    atendimentoService: new AtendimentoService(getAtendimentoRepository()),
+    dashboardService: new DashboardService(getStatsRepository()),
+    authService: new AuthService(getAuthRepository()),
 }
 
 // ================================================================
 // REPOSITORY GETTERS (Singletons)
 // ================================================================
+
+function getAuthRepository() {
+  if (!authRepositoryInstance) {
+    authRepositoryInstance = new MockAuthRepository();
+  }
+  return authRepositoryInstance;
+}
 
 function getPatientRepository() {
   if (!patientRepositoryInstance) {
@@ -48,7 +55,7 @@ function getPatientRepository() {
   }
   return patientRepositoryInstance;
 }
-
+  
 function getEncaminhamentoRepository() {
   if (!encaminhamentoRepositoryInstance) {
     encaminhamentoRepositoryInstance = new MockEncaminhamentoRepository();
@@ -63,12 +70,6 @@ function getHospitalRepository() {
   return hospitalRepositoryInstance;
 }
 
-function getUserRepository() {
-  if (!userRepositoryInstance) {
-    userRepositoryInstance = new MockUserRepository();
-  }
-  return userRepositoryInstance;
-}
 
 function getAtendimentoRepository() {
   if (!atendimentoRepositoryInstance) {
@@ -85,32 +86,4 @@ function getStatsRepository() {
     );
   }
   return statsRepositoryInstance;
-}
-
-// ================================================================
-// SERVICE FACTORIES
-// ================================================================
-
-function createPatientService(): PatientService {
-  return new PatientService(getPatientRepository());
-}
-
-function createEncaminhamentoService(): EncaminhamentoService {
-  return new EncaminhamentoService(getEncaminhamentoRepository());
-}
-
-function createHospitalService(): HospitalService {
-  return new HospitalService(getHospitalRepository());
-}
-
-function createUserService(): UserService {
-  return new UserService(getUserRepository());
-}
-
-function createAtendimentoService(): AtendimentoService {
-  return new AtendimentoService(getAtendimentoRepository());
-}
-
-function createDashboardService(): DashboardService {
-  return new DashboardService(getStatsRepository());
 }

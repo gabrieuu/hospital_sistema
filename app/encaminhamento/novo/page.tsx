@@ -1,59 +1,52 @@
 'use client';
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/app/lib/components/ui/Button';
 import { Card } from '@/app/lib/components/ui/Card';
 import { Input } from '@/app/lib/components/ui/Input';
-
-const tiposExame = [
-  'Cardiologia',
-  'Ortopedia',
-  'Neurologia',
-  'Oftalmologia',
-  'Dermatologia',
-  'Pediatria',
-  'Radiologia',
-  'Ultrassonografia',
-  'Tomografia',
-  'Ressonância Magnética'
-];
-
-const hospitaisParceiros = [
-  {
-    id: '1',
-    nome: 'Hospital do Coração',
-    especialidade: 'Cardiologia',
-    distancia: 3.2,
-    disponibilidade: 'Alta disponibilidade'
-  },
-  {
-    id: '2',
-    nome: 'Hospital Ortopédico',
-    especialidade: 'Ortopedia',
-    distancia: 5.8,
-    disponibilidade: 'Média disponibilidade'
-  },
-  {
-    id: '3',
-    nome: 'Hospital Geral Central',
-    especialidade: 'Clínica Geral',
-    distancia: 2.1,
-    disponibilidade: 'Alta disponibilidade'
-  }
-];
+import { TipoExame } from '@/app/lib/domain/enum/tipos_exames';
+import { Modular } from '@/app/lib/di/service';
+import { Hospital } from '@/app/lib/domain/models';
 
 type UrgencyLevel = 'alta' | 'media' | 'baixa';
 
 export default function NovoEncaminhamentoPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pacienteId = searchParams.get('pacienteId');
+  
   const [tipoExame, setTipoExame] = useState('');
   const [urgencia, setUrgencia] = useState<UrgencyLevel>('media');
   const [hospitalSelecionado, setHospitalSelecionado] = useState('');
   const [observacoes, setObservacoes] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredTipos = tiposExame.filter(tipo =>
+  const hospitalService = Modular.hospitalService;
+
+  const [hospitais, setHospitais] = useState<Hospital[]>([]);
+  const [hospitaisParceiros, setHospitaisParceiros] = useState<Hospital[]>([]);
+
+  useEffect(() => {
+    const fetchHospitais = async () => {
+      const allHospitais = await hospitalService.getAllHospitals();
+      setHospitais(allHospitais);
+      setHospitaisParceiros(allHospitais.slice());
+    };
+    fetchHospitais();
+  }, []);
+
+  useEffect(() => {
+     const hospitaisFiltrados = hospitais.filter(hospital =>
+      //espec.nome é um enum de TipoExame
+      hospital.tipos_exames.some(espec => 
+          espec.nome.toLowerCase().includes(tipoExame.toLowerCase())        
+        )
+      );
+    setHospitaisParceiros(hospitaisFiltrados.slice());
+  }, [tipoExame]);
+
+  const filteredTipos = Object.values(TipoExame).filter(tipo =>
     tipo.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -61,7 +54,20 @@ export default function NovoEncaminhamentoPage() {
     e.preventDefault();
     // Simulação de envio
     alert('Encaminhamento criado com sucesso!');
-    router.push('/dashboard');
+    // Volta para a página do paciente se vier de lá, senão vai pro dashboard
+    if (pacienteId) {
+      router.push(`/pacientes/${pacienteId}`);
+    } else {
+      router.push('/dashboard');
+    }
+  };
+
+  const handleVoltar = () => {
+    if (pacienteId) {
+      router.push(`/pacientes/${pacienteId}`);
+    } else {
+      router.push('/dashboard');
+    }
   };
 
   const getUrgencyStyle = (level: UrgencyLevel) => {
@@ -88,7 +94,7 @@ export default function NovoEncaminhamentoPage() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-4xl mx-auto flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={handleVoltar}
             className="text-gray-600 hover:text-[#0A3D62] transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +131,6 @@ export default function NovoEncaminhamentoPage() {
                     type="button"
                     onClick={() => {
                       setTipoExame(tipo);
-                      setSearchTerm(tipo);
                     }}
                     className={`px-4 py-2 rounded-lg border transition-colors text-left ${
                       tipoExame === tipo
@@ -195,6 +200,11 @@ export default function NovoEncaminhamentoPage() {
               Hospital Parceiro
             </h2>
             <div className="space-y-3">
+              
+              {hospitaisParceiros.length === 0 && (
+                <p className="text-gray-500">Nenhum hospital disponível para o tipo de exame selecionado.</p>
+              )}
+              
               {hospitaisParceiros.map((hospital) => (
                 <div
                   key={hospital.id}
@@ -208,7 +218,7 @@ export default function NovoEncaminhamentoPage() {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <h3 className="font-semibold text-[#1A1A1A]">{hospital.nome}</h3>
-                      <p className="text-sm text-gray-600 mt-1">{hospital.especialidade}</p>
+                      <p className="text-sm text-gray-600 mt-1">{hospital.especialidades.join(', ')}</p>
                       <div className="flex items-center gap-4 mt-2">
                         <span className="text-xs text-gray-500 flex items-center gap-1">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

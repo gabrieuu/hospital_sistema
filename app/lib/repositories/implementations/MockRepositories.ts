@@ -9,9 +9,11 @@ import { UrgencyLevel } from "@/app/lib/domain/enum/UrgencyLevel";
 import { IPatientRepository } from "@/app/lib/repositories/contracts/IPatientRepository";
 import { IEncaminhamentoRepository } from "@/app/lib/repositories/contracts/IEncaminhamentoRepository";
 import { IHospitalRepository } from "@/app/lib/repositories/contracts/IHospitalRepository";
-import { IUserRepository } from "@/app/lib/repositories/contracts/IUserRepository";
 import { IAtendimentoRepository } from "@/app/lib/repositories/contracts/IAtendimentoRepository";
 import { IStatsRepository } from "@/app/lib/repositories/contracts/IStatsRepository";
+import { TipoExame } from "../../domain/enum/tipos_exames";
+import { IAuthRepository } from "../contracts/IAuthRepository";
+import { LoginResponse } from "../../domain/models/LoginResponse";
 
 const mockHospitals: Hospital[] = [
   {
@@ -21,6 +23,28 @@ const mockHospitals: Hospital[] = [
     telefone: '(11) 3456-7890',
     email: 'contato@hospitalcentral.com.br',
     especialidades: ['Cardiologia', 'Neurologia', 'Ortopedia'],
+    tipos_exames: [
+      {
+        nome: TipoExame.Eletrocardiograma,
+        preco: 250,
+        disponivel: true
+      },
+      {
+        nome: TipoExame.RessonanciaMagnetica,
+        preco: 800,
+        disponivel: false
+      },
+      {
+        nome: TipoExame.Colonoscopia,
+        preco: 400,
+        disponivel: true
+      },
+      {
+        nome: TipoExame.Eletrocardiograma,
+        preco: 250,
+        disponivel: true
+      } 
+    ],
     distancia: '2.5 km',
     disponivel: true,
     disponibilidade: 'Alta',
@@ -40,6 +64,23 @@ const mockHospitals: Hospital[] = [
     telefone: '(11) 2345-6789',
     email: 'contato@saolucas.com.br',
     especialidades: ['Pediatria', 'Ginecologia', 'Oncologia'],
+    tipos_exames:[
+      {
+        nome: TipoExame.RaioX,
+        preco: 150,
+        disponivel: true
+      },
+      {
+        nome: TipoExame.Ultrassonografia,
+        preco: 200,
+        disponivel: true
+      },
+      {
+        nome: TipoExame.Tomografia,
+        preco: 500,
+        disponivel: false
+      }
+    ],
     distancia: '5.8 km',
     disponivel: true,
     disponibilidade: 'Média',
@@ -59,6 +100,23 @@ const mockHospitals: Hospital[] = [
     telefone: '(11) 4567-8901',
     email: 'contato@santamaria.com.br',
     especialidades: ['Traumatologia', 'Radiologia', 'UTI'],
+    tipos_exames: [
+      {
+        nome: TipoExame.Colonoscopia,
+        preco: 400,
+        disponivel: true
+      },
+      {
+        nome: TipoExame.RaioX,
+        preco: 150,
+        disponivel: true
+      },
+      {
+        nome: TipoExame.Ultrassonografia,
+        preco: 200,
+        disponivel: false
+      }
+    ],
     distancia: '8.2 km',
     disponivel: false,
     disponibilidade: 'Baixa',
@@ -200,7 +258,7 @@ const mockAtendimentos: Atendimento[] = [
     hospitalId: '1',
     tipo: 'Consulta',
     descricao: 'Consulta de rotina - Cardiologia',
-    data: new Date('2024-10-20'),
+    data: new Date(Date.now()),
     medico: 'Dr. Carlos Alberto'
   },
   {
@@ -209,7 +267,7 @@ const mockAtendimentos: Atendimento[] = [
     hospitalId: '1',
     tipo: 'Exame',
     descricao: 'Hemograma completo',
-    data: new Date('2024-10-22'),
+    data: new Date(Date.now()),
     medico: 'Dra. Ana Paula'
   }
 ];
@@ -217,12 +275,28 @@ const mockAtendimentos: Atendimento[] = [
 const mockUsers: User[] = [
   {
     id: '1',
-    nome: 'Admin Hospital Central',
-    email: 'admin@hospitalcentral.com.br',
-    hospitalId: '1',
-    role: 'admin'
+    nome: 'Hospital Central',
+    email: 'admin@hospital',
   }
 ];
+
+export class MockAuthRepository implements IAuthRepository {
+  async login(email: string, password: string): Promise<LoginResponse> {
+    const user = mockUsers.find(u => u.email === email);
+    if (!user) throw new Error('User not found');
+
+    return {
+      token: 'mock-token',
+      user,
+      hospitalName: 'Hospital Central',
+      hospitalId: '1'
+    };
+  }
+
+  async logout(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
+}
 
 export class MockPatientRepository implements IPatientRepository {
   private patients: Patient[] = [...mockPatients];
@@ -279,8 +353,9 @@ export class MockPatientRepository implements IPatientRepository {
 export class MockEncaminhamentoRepository implements IEncaminhamentoRepository {
   private encaminhamentos: Encaminhamento[] = [...mockEncaminhamentos];
 
-  async getAll(): Promise<Encaminhamento[]> {
-    return Promise.resolve(this.encaminhamentos);
+  async getAllByHospital(hospitalId: string): Promise<Encaminhamento[]> {
+    const results = this.encaminhamentos.filter(e => e.hospitalOrigemId === hospitalId || e.hospitalDestinoId === hospitalId);
+    return Promise.resolve(results);
   }
 
   async getById(id: string): Promise<Encaminhamento | null> {
@@ -362,38 +437,12 @@ export class MockHospitalRepository implements IHospitalRepository {
   }
 }
 
-export class MockUserRepository implements IUserRepository {
-  private users: User[] = [...mockUsers];
-
-  async getById(id: string): Promise<User | null> {
-    const user = this.users.find(u => u.id === id);
-    return Promise.resolve(user || null);
-  }
-
-  async getByEmail(email: string): Promise<User | null> {
-    const user = this.users.find(u => u.email === email);
-    return Promise.resolve(user || null);
-  }
-
-  async create(userData: Omit<User, 'id'>): Promise<User> {
-    const newUser: User = { ...userData, id: Date.now().toString() };
-    this.users.push(newUser);
-    return Promise.resolve(newUser);
-  }
-
-  async update(id: string, userData: Partial<User>): Promise<User> {
-    const index = this.users.findIndex(u => u.id === id);
-    if (index === -1) throw new Error('User not found');
-    this.users[index] = { ...this.users[index], ...userData };
-    return Promise.resolve(this.users[index]);
-  }
-}
-
 export class MockAtendimentoRepository implements IAtendimentoRepository {
   private atendimentos: Atendimento[] = [...mockAtendimentos];
 
-  async getAll(): Promise<Atendimento[]> {
-    return Promise.resolve(this.atendimentos);
+  async getAllbyHospital(hospitalId: string): Promise<Atendimento[]> {
+    const results = this.atendimentos.filter(a => a.hospitalId === hospitalId);
+    return Promise.resolve(results);
   }
 
   async getById(id: string): Promise<Atendimento | null> {
@@ -432,8 +481,8 @@ export class MockStatsRepository implements IStatsRepository {
   ) {}
 
   async getDashboardStats(hospitalId: string): Promise<DashboardStats> {
-    const allEncaminhamentos = await this.encaminhamentoRepository.getAll();
-    const allAtendimentos = await this.atendimentoRepository.getAll();
+    const allEncaminhamentos = await this.encaminhamentoRepository.getAllByHospital(hospitalId);
+    const allAtendimentos = await this.atendimentoRepository.getAllbyHospital(hospitalId);
     const encaminhamentosPendentes = allEncaminhamentos.filter(
       e => e.status === EncaminhamentoStatus.PENDENTE &&
       (e.hospitalOrigemId === hospitalId || e.hospitalDestinoId === hospitalId)

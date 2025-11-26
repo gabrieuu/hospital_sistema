@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Card } from '@/app/lib/components/ui/Card';
 import { Button } from '@/app/lib/components/ui/Button';
 
@@ -45,6 +45,8 @@ const mockPaciente = {
 
 export default function PacientePage() {
   const router = useRouter();
+  const params = useParams();
+  const pacienteId = params.id as string;
 
   const getUrgencyColor = (urgencia: 'alta' | 'media' | 'baixa') => {
     return {
@@ -60,7 +62,10 @@ export default function PacientePage() {
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+                router.push(`/dashboard`);
+              
+            }}
             className="text-gray-600 hover:text-[#0A3D62] transition-colors"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,10 +80,10 @@ export default function PacientePage() {
           </div>
           <Button
             variant="primary"
-            onClick={() => router.push('/encaminhamento/novo?pacienteId=1')}
+            onClick={() => router.push(`/encaminhamento/novo?pacienteId=${pacienteId}`)}
           >
             Criar Encaminhamento
-          </Button>
+          </Button>   
         </div>
       </header>
 
