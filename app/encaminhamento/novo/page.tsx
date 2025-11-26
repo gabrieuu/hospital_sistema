@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/app/lib/components/ui/Button';
 import { Card } from '@/app/lib/components/ui/Card';
@@ -11,7 +11,8 @@ import { Hospital } from '@/app/lib/domain/models';
 
 type UrgencyLevel = 'alta' | 'media' | 'baixa';
 
-export default function NovoEncaminhamentoPage() {
+// Componente interno que usa useSearchParams
+function NovoEncaminhamentoForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pacienteId = searchParams.get('pacienteId');
@@ -277,5 +278,26 @@ export default function NovoEncaminhamentoPage() {
         </form>
       </main>
     </div>
+  );
+}
+
+// Componente de loading para o Suspense
+function LoadingEncaminhamento() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Carregando...</p>
+      </div>
+    </div>
+  );
+}
+
+// Wrapper principal com Suspense
+export default function NovoEncaminhamentoPage() {
+  return (
+    <Suspense fallback={<LoadingEncaminhamento />}>
+      <NovoEncaminhamentoForm />
+    </Suspense>
   );
 }

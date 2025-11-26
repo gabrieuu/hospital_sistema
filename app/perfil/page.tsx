@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card } from '@/app/lib/components/ui/Card';
 import { Button } from '@/app/lib/components/ui/Button';
@@ -11,8 +11,13 @@ export default function PerfilPage() {
   const router = useRouter();
   const [notificacoesAtivas, setNotificacoesAtivas] = useState(true);
   const [temaEscuro, setTemaEscuro] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const userStore = useUserStore();
   const authService = Modular.authService;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleLogout = async () => {
     if (confirm('Deseja realmente sair do sistema?')) {
@@ -20,6 +25,18 @@ export default function PerfilPage() {
       router.push('/login');
     }
   };
+
+  // Proteger contra SSR e estado não carregado
+  if (!mounted || !userStore.user) {
+    return (
+      <div className="min-h-screen bg-[#F5F6FA] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0A3D62] mx-auto"></div>
+          <p className="mt-4 text-gray-600">Carregando perfil...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F6FA]">
@@ -50,7 +67,7 @@ export default function PerfilPage() {
               </div>
               <div>
                 <h2 className="text-2xl font-semibold text-[#1A1A1A]">
-                  {userStore.user?.nome}
+                  {userStore.user.nome}
                 </h2>
               </div>
             </div>
@@ -62,7 +79,7 @@ export default function PerfilPage() {
                 </svg>
                 <div className="flex-1">
                   <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium text-[#1A1A1A]">{userStore.user!.email}</p>
+                  <p className="font-medium text-[#1A1A1A]">{userStore.user.email}</p>
                 </div>
               </div>
 

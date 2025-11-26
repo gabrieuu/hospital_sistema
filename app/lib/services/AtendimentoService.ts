@@ -4,10 +4,6 @@ import { IAtendimentoRepository } from "@/app/lib/repositories/contracts/IAtendi
 export class AtendimentoService {
   constructor(private atendimentoRepository: IAtendimentoRepository) {}
 
-  async getAllAtendimentos(): Promise<Atendimento[]> {
-    return await this.atendimentoRepository.getAll();
-  }
-
   async getAtendimentoById(id: string): Promise<Atendimento | null> {
     return await this.atendimentoRepository.getById(id);
   }
